@@ -1,3 +1,5 @@
+// Package main implements compareBytes, a CLI tool that compares two files
+// byte-by-byte and reports mismatches.
 package main
 
 import (
@@ -38,7 +40,7 @@ func main() {
 		return
 	}
 
-	// Creater writer if flag was passed
+	// Create writer if flag was passed
 	writeOut := false
 	if *_outFileName != "" {
 		writeOut = true
@@ -49,7 +51,11 @@ func main() {
 		}
 
 		_outWriter = bufio.NewWriter(outFile)
-		defer _outWriter.Flush()
+		defer func() {
+			if err := _outWriter.Flush(); err != nil {
+				log.Printf("Error flushing out file: %s\n", err.Error())
+			}
+		}()
 	}
 
 	// Open files
@@ -143,7 +149,9 @@ func main() {
 
 			// Write it out if selected
 			if writeOut {
-				_outWriter.WriteString(logString)
+				if _, err := _outWriter.WriteString(logString); err != nil {
+					log.Printf("Error writing to out file: %s\n", err.Error())
+				}
 			}
 		}
 	}
