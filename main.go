@@ -138,7 +138,7 @@ func main() {
 
 			// Log it if selected
 			if *_print {
-				log.Printf(logString)
+				log.Print(logString)
 			}
 
 			// Write it out if selected
