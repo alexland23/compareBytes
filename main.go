@@ -24,20 +24,24 @@ var (
 )
 
 func main() {
+	os.Exit(run())
+}
+
+func run() int {
 	log.Println("Starting compareBytes")
 
 	// Set and parse flags
 	_filePath1 = flag.String("f1", "", "Path of first file")
 	_filePath2 = flag.String("f2", "", "Path of second file")
 	_outFileName = flag.String("o", "", "If present out file with compare results.")
-	_print = flag.Bool("p", false, "Print mismatches, default is true.")
+	_print = flag.Bool("p", false, "Print mismatches, default is false.")
 	flag.Parse()
 
 	// Ensure user passed filenames
 	if *_filePath1 == "" || *_filePath2 == "" {
 		log.Println("f1 and f2 flags must be set")
 		flag.PrintDefaults()
-		return
+		return 1
 	}
 
 	// Create writer if flag was passed
@@ -47,8 +51,9 @@ func main() {
 		outFile, err := os.Create(*_outFileName)
 		if err != nil {
 			log.Printf("Error creating out file: %s\n", err.Error())
-			return
+			return 1
 		}
+		defer outFile.Close()
 
 		_outWriter = bufio.NewWriter(outFile)
 		defer func() {
@@ -62,26 +67,28 @@ func main() {
 	file1, err := os.Open(*_filePath1)
 	if err != nil {
 		log.Printf("Error opening %s: %s\n", *_filePath1, err.Error())
-		return
+		return 1
 	}
+	defer file1.Close()
 
 	file2, err := os.Open(*_filePath2)
 	if err != nil {
 		log.Printf("Error opening %s: %s\n", *_filePath2, err.Error())
-		return
+		return 1
 	}
+	defer file2.Close()
 
 	// Get file sizes
 	file1Stat, err := file1.Stat()
 	if err != nil {
 		log.Printf("Error getting stats for %s: %s\n", *_filePath1, err.Error())
-		return
+		return 1
 	}
 
 	file2Stat, err := file2.Stat()
 	if err != nil {
 		log.Printf("Error getting stats for %s: %s\n", *_filePath2, err.Error())
-		return
+		return 1
 	}
 
 	file1Size := file1Stat.Size()
@@ -108,11 +115,11 @@ func main() {
 					log.Printf("%d bytes still remaining to be read for %s\n", int(file2Size)-count2, *_filePath2)
 				}
 				log.Printf("Total number of mismatches: %d\n", mismatches)
-				return
+				return 0
 			}
 
 			log.Printf("Error reading byte for %s: %s", *_filePath1, err.Error())
-			return
+			return 1
 		}
 		count1++
 
@@ -128,11 +135,11 @@ func main() {
 					log.Printf("%d bytes still remaining to be read for %s\n", int(file1Size)-count1, *_filePath1)
 				}
 				log.Printf("Total number of mismatches: %d\n", mismatches)
-				return
+				return 0
 			}
 
 			log.Printf("Error reading byte for %s: %s", *_filePath2, err.Error())
-			return
+			return 1
 		}
 		count2++
 
